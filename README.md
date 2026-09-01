@@ -2,8 +2,6 @@
 
 Independent research project comparing five motor control strategies on a custom-built 4WD robot, using real-time electrical, inertial, and proximity sensing to anticipate high-load terrain and obstacles before they fully develop, rather than only reacting after the fact.
 
-Built and researched independently, targeting CSEF/LACSEF, ISEF, and related science competitions.
-
 ## Overview
 
 Battery-powered mobile robots waste significant energy when their motor controllers can't anticipate changing terrain, inclines, and obstacles, they simply react after current spikes or battery voltage sags. This project builds a fully instrumented robot and directly compares five control strategies to test whether predictive electrical and proximity feedback can meaningfully reduce energy consumption per meter without sacrificing path accuracy or mission success.
@@ -11,7 +9,7 @@ Battery-powered mobile robots waste significant energy when their motor controll
 ## Controllers compared
 
 1. **Fixed-speed** — no adaptation, baseline.
-2. **PID** — closed-loop velocity regulation via encoder feedback.
+2. **PID** - closed-loop velocity regulation via encoder feedback.
 3. **Threshold-based protection** — reactive slowdown after current/voltage exceeds a fixed threshold.
 4. **Predictive** — a Kalman filter forecasts near-future current draw from a rolling window, and dual time-of-flight sensors anticipate obstacles, triggering preemptive speed reduction and steering bias before a load event or collision fully develops.
 5. **Hybrid** — combines PID velocity regulation with the predictive layer modulating target speed, acceleration limits, and steering bias.
