@@ -1,50 +1,49 @@
-# Predictive Electrical Feedback Control for Energy-Efficient Autonomous Mobile Robots
+# Predictive Electrical Feedback Control for Mobile Robots
 
-Independent research project comparing five motor control strategies on a custom-built 4WD robot, using real-time electrical, inertial, and proximity sensing to anticipate high-load terrain and obstacles before they fully develop, rather than only reacting after the fact.
-
-## Overview
-
-Battery-powered mobile robots waste significant energy when their motor controllers can't anticipate changing terrain, inclines, and obstacles, they simply react after current spikes or battery voltage sags. This project builds a fully instrumented robot and directly compares five control strategies to test whether predictive electrical and proximity feedback can meaningfully reduce energy consumption per meter without sacrificing path accuracy or mission success.
-
-## Controllers compared
-
-1. **Fixed-speed** — no adaptation, baseline.
-2. **PID** - closed-loop velocity regulation via encoder feedback.
-3. **Threshold-based protection** — reactive slowdown after current/voltage exceeds a fixed threshold.
-4. **Predictive** — a Kalman filter forecasts near-future current draw from a rolling window, and dual time-of-flight sensors anticipate obstacles, triggering preemptive speed reduction and steering bias before a load event or collision fully develops.
-5. **Hybrid** — combines PID velocity regulation with the predictive layer modulating target speed, acceleration limits, and steering bias.
-
-A trained decision-tree terrain classifier (current draw + accelerometer variance features) runs in parallel, distinguishing smooth, carpeted, and inclined surfaces in real time, evaluated against a hand-tuned rule-based baseline.
-
-## Hardware
-
-- ESP32-WROOM-32 microcontroller
-- 4x Pololu 50:1 micro metal gearmotors with encoders (paired left/right, differential drive)
-- 2x TB6612FNG motor drivers
-- 2x INA226 current/voltage sensors
-- MPU6050 IMU
-- 2x VL53L0X time-of-flight distance sensors (front-facing + side-facing for steering)
-- 10kΩ NTC thermistor (battery temperature)
-- 2S LiPo battery (primary) + secondary lower-capacity 2S LiPo (low-battery edge-case testing)
-- MicroSD card for onboard data logging
-
-## Repository contents
-
-| File | Description |
-|---|---|
-| `robot_firmware.ino` | Main ESP32 firmware: all five controllers, Kalman filter, sensor fusion, dual-ToF steering, SD logging. Includes a `TEST_MODE` flag for running/verifying control logic on the bare ESP32 with simulated sensor data, no other hardware required. |
-| `terrain_classifier_trained.h` | Auto-generated decision tree terrain classifier, exported from `train_terrain_classifier.py`. Included directly by the firmware. |
-| `train_terrain_classifier.py` | Trains the terrain classifier (currently on placeholder data) and exports it to embeddable C++. |
-| `analyze_controllers.py` | Statistical analysis pipeline: ANOVA, pairwise t-tests, terrain classification accuracy, and obstacle-response analysis across controllers. |
-| `energy_model.py` | Physics-based analytical energy model (rolling resistance + incline work), compared against measured energy consumption. |
-| `randomization_script.py` | Generates the fixed, pre-registered randomized trial order used during data collection. |
-| `experimental_protocol.md` | Full experimental protocol: variables, trial structure, randomization approach, statistical analysis plan. |
-| `paper_draft.md` | Introduction, Literature Review, and Methods sections of the research paper. |
+This repo has the firmware and analysis pipeline for a research project comparing five motor control strategies on a small 4WD robot. The question is whether a robot can use its own real-time current, voltage, inertial and distance readings to anticipate high-load terrain and obstacles, and slow down early enough to save energy per meter.
 
 ## Status
 
-Firmware and analysis pipeline complete and tested (currently using simulated/placeholder data pending hardware arrival and bench-test calibration). Physical build and data collection in progress.
+**The hardware build is paused.** I'm focusing on a new research project in RISC-V processor security.
+
+- The firmware compiles for the ESP32. Its `TEST_MODE` runs the control logic on a bare ESP32 with simulated sensor values, but it hasn't been run on the finished robot.
+- The terrain classifier is trained on **simulated** data. It has to be retrained on real sensor data before its accuracy means anything.
+- The analysis scripts run on **dummy** data, so the pipeline is tested end to end. There are no real trial results yet.
+
+## Controllers compared
+
+1. **Fixed-speed:** no adaptation; this is the baseline.
+2. **PID:** closed-loop velocity control from encoder feedback.
+3. **Threshold:** slows down after current or voltage crosses a fixed limit, so it only reacts.
+4. **Predictive:** a Kalman filter forecasts near-future current draw, and two time-of-flight sensors spot obstacles, so the robot slows down *before* a load spike or collision.
+5. **Hybrid:** PID speed control, with the predictive layer adjusting target speed, acceleration and steering.
+
+## Hardware design
+
+- ESP32-WROOM-32
+- 4x Pololu 50:1 micro metal gearmotors with encoders, and 2x TB6612FNG motor drivers
+- 2x INA226 current/voltage sensors and an MPU6050 IMU
+- 2x VL53L0X time-of-flight sensors: one facing forward, one facing the side
+- A 10 kΩ NTC thermistor to measure battery temperature
+- 2S LiPo battery and MicroSD logging
+
+## Repository layout
+
+| File | What it is |
+| --- | --- |
+| `Robot Firmware/` | ESP32 firmware. It contains all five controllers, the Kalman filter, sensor reading, ToF steering and SD-card logging, plus `terrain_classifier_trained.h`, the exported classifier. |
+| `TrainTerrainClassifier.py` | Trains the decision-tree terrain classifier in scikit-learn and generates the C++ header. |
+| `AnalyzeControllers.py` | ANOVA and pairwise t-tests across the controllers. |
+| `EnergyModel.py` | A physics energy model (rolling resistance plus incline work). The coefficients are placeholders until bench calibration. |
+| `RandomizationScript.py`, `trial_sequence.csv` | The pre-generated randomized trial order. |
+| `experimental_protocol.md` | Variables, trial structure and the statistical analysis plan. |
+
+The statistics helpers were later pulled out into a reusable package, [scifair-toolkit](https://github.com/Kero105/scifair-toolkit).
+
+## Building the firmware
+
+Open the `.ino` file in `Robot Firmware/` with the Arduino IDE with ESP32 board support. Install the libraries listed at the top of the file: INA226 (Rob Tillaart), Adafruit MPU6050, Adafruit VL53L0X and Adafruit Unified Sensor.
 
 ## License
 
-MIT.
+MIT
